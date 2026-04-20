@@ -183,7 +183,7 @@ export function computeAll(state: AppState): ComputedData {
   const perApartmentAnnualSavings = effectiveSavings * meaShare;
   const perApartmentMonthlySavings = perApartmentAnnualSavings / 12;
 
-  // Loan
+  // Loan (per apartment, for the cash-flow display)
   const monthlyRate = state.kfwRate / 100 / 12;
   const numPayments = state.loanYears * 12;
   const monthlyLoanPayment = state.financingMethod === 'kfw'
@@ -191,13 +191,19 @@ export function computeAll(state: AppState): ComputedData {
     : 0;
   const netMonthlyCashFlow = perApartmentMonthlySavings - monthlyLoanPayment;
 
-  // Payback
-  const effectiveInvestment = state.financingMethod === 'contracting' ? 0 : totalInvestment;
-  const paybackYears = effectiveSavings > 0 && effectiveInvestment > 0 ? effectiveInvestment / effectiveSavings : state.financingMethod === 'contracting' ? 0 : 99;
+  // WEG-level annual loan cost (for the 25-year projection)
+  // KfW loan is taken on the full WEG investment; interest reduces 25-year profit.
+  const annualLoanPaymentTotal = state.financingMethod === 'kfw'
+    ? pmt(monthlyRate, numPayments, totalInvestment) * 12
+    : 0;
 
   // 25-year projection
+  // Sonderumlage: pay totalInvestment upfront, then pure savings.
+  // KfW: no upfront, but annual loan payments (principal + interest) during loanYears.
+  // Contracting: no upfront, no opex, WEG keeps 30% of revenue.
   const projection25yr: ComputedData['projection25yr'] = [];
-  let cumulative = -effectiveInvestment;
+  const upfront = state.financingMethod === 'sonderumlage' ? totalInvestment : 0;
+  let cumulative = -upfront;
   for (let year = 1; year <= 25; year++) {
     const priceMultiplier = Math.pow(1 + state.priceIncrease / 100, year - 1);
     let yearRevenue: number;
@@ -211,16 +217,37 @@ export function computeAll(state: AppState): ComputedData {
     if (state.financingMethod === 'contracting') yearRevenue *= 0.3;
     const yearOpex = state.financingMethod === 'contracting' ? 0 : annualOpex;
     const inverterReplacement = (year === 15 && state.financingMethod !== 'contracting') ? 4000 : 0;
-    const yearSavings = yearRevenue - yearOpex - inverterReplacement;
+    const yearLoanPayment = (state.financingMethod === 'kfw' && year <= state.loanYears) ? annualLoanPaymentTotal : 0;
+    const yearSavings = yearRevenue - yearOpex - inverterReplacement - yearLoanPayment;
     cumulative += yearSavings;
     projection25yr.push({
       year,
       annualSavings: Math.round(yearSavings),
-      annualCost: Math.round(yearOpex + inverterReplacement),
+      annualCost: Math.round(yearOpex + inverterReplacement + yearLoanPayment),
       cumulative: Math.round(cumulative),
     });
   }
   const profit25yr = Math.round(cumulative);
+
+  // Payback: first year where cumulative >= 0
+  let paybackYears: number;
+  if (state.financingMethod === 'contracting') {
+    paybackYears = 0;
+  } else {
+    const firstPositive = projection25yr.find(p => p.cumulative >= 0);
+    if (firstPositive) {
+      // Linear interpolation within the year for smoother payback value
+      const prev = projection25yr[firstPositive.year - 2];
+      if (prev && prev.cumulative < 0) {
+        const frac = -prev.cumulative / (firstPositive.cumulative - prev.cumulative);
+        paybackYears = firstPositive.year - 1 + frac;
+      } else {
+        paybackYears = firstPositive.year;
+      }
+    } else {
+      paybackYears = 99;
+    }
+  }
 
   // Compare all 3 supply models
   const supplyModelComparison = (['volleinspeisung', 'par42b', 'par42c'] as SupplyModel[]).map(model => {
