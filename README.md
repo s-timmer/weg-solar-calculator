@@ -1,73 +1,39 @@
-# React + TypeScript + Vite
+# Solar für unser Haus — Hobrechtstraße 28
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interactive calculator for the WEG (homeowners' association) at Hobrechtstraße 28, 12047 Berlin-Neukölln, exploring trade-offs around a rooftop solar PV + battery installation.
 
-Currently, two official plugins are available:
+**Live:** _(add URL after deploy)_
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What it does
 
-## React Compiler
+A single-page calculator where sliders and toggles on the left drive live-updating numbers on the right. Covers four key trade-offs:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **System size** (30–45 kWp) and whether to include the Berlin SolarPLUS subsidy
+2. **Supply model** — Full feed-in, §42b Kundenanlage, or §42c Energy Sharing (from June 2026)
+3. **Battery storage** (0–40 kWh)
+4. **Financing** — KfW loan, one-time levy (Sonderumlage), or contracting via an external operator
 
-## Expanding the ESLint configuration
+Four quick-start presets (Conservative / Recommended / Max returns / Zero risk) anchor the discussion, and the hero banner shows the 25-year profit per apartment plus net monthly cash flow.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Bilingual: DE / EN toggle in the top right.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Figures & assumptions
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+All numbers come from the feasibility study for the building (Berlin solar yield ~950 kWh/kWp/yr, 0% VAT since 2023, feed-in tariffs fixed 20 years, inverter replacement in year 15). Subsidy estimates are conservative. **Get professional quotes before any WEG resolution.**
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Running locally
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Build for production:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+## Stack
+
+React + Vite + TypeScript, Tailwind v4, shadcn/ui, DM Sans / DM Mono.
